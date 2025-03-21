@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-api
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-api
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-api
+    spec:
+      containers:
+      - name: api
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: AWS_REGION
+          value: "{{ .Values.env.AWS_REGION }}"
+        - name: DYNAMODB_TABLE
+          value: "{{ .Values.env.DYNAMODB_TABLE }}"
+        - name: S3_BUCKET
+          value: "{{ .Values.env.S3_BUCKET }}"
+        - name: LOCALSTACK_URL
+          value: "{{ .Values.env.LOCALSTACK_URL }}"
+        - name: DYNAMODB_ENDPOINT
+          value: "{{ .Values.env.LOCALSTACK_URL }}"  # ✅ Using the existing LocalStack URL
+        ports:
+        - containerPort: 5000
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
